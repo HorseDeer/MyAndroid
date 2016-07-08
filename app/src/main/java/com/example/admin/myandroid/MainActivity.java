@@ -39,7 +39,8 @@ import twitter4j.TwitterListener;
 import twitter4j.auth.AccessToken;
 import twitter4j.conf.ConfigurationBuilder;
 
-public class MainActivity extends AppCompatActivity implements OnClickListener, SensorEventListener, LocationListener {
+public class MainActivity extends AppCompatActivity implements SensorEventListener, LocationListener {
+    //各種グローバル変数の定義
     AsyncTwitterFactory factory = new AsyncTwitterFactory();
     AsyncTwitter twitter = factory.getInstance();
     Twitter myTwitter;
@@ -47,38 +48,44 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
     final int REQUEST_ACCESS_TOKEN = 0;
     final String consumer_key = "mN3nLNC0DKY1hvrut1rJZVdqG";
     final String consumer_secret = "zeoqUjyvaNTZDiDTbE2ERyw2j7JDTJGqUE6pZHCJLBlbAcIYbJ";
-    String token = "";
-    String token_secret = "";
+    String token = "", token_secret = "";
     SharedPreferences pref;
     SharedPreferences.Editor editor;
 
-    private SensorManager sm;
+    //主にセンサー関係のグローバル変数
+    private SensorManager asm;
     private LocationManager lm;
+    private Button attentionMode;
+    boolean endless = false, setDistance = false, isDisTweet = false, isAttention = false;
     float[] data = new float[3];
-    long start,end;
-    TextView time, locate, prov;
-    boolean vibra = false;
-    int location_min_time = 0, location_min_distance = 1;
-
+    int vibra = 0, location_min_time = 0, location_min_distance = 1;
+    double startLati, endLati, startLong, endLong, distance = 1.0, total = 0.0;
+    long start, end, endlessS=0, endlessG=0;
+    TextView time, locate, prov, appFace, appMessage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        //アクティビティ生成時に呼び出される
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        sm = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
+        //加速度センサマネージャとロケーションマネージャの設定
+        asm = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
         lm = (LocationManager)getSystemService(Service.LOCATION_SERVICE);
+        //時間計測の開始
         start = System.currentTimeMillis();
+
         data[0] = 0;
         data[1] = 0;
         data[2] = 0;
+        //各種テキストビューの紐づけ
         time = (TextView)findViewById(R.id.acceleText);
         locate = (TextView)findViewById(R.id.locationText);
         prov = (TextView)findViewById(R.id.providerText);
-/*
-        final Button tb = (Button)findViewById(R.id.tweet_button);
-        tb.setOnClickListener(this);
-*/
+        appFace = (TextView)findViewById(R.id.face);
+        appMessage = (TextView)findViewById(R.id.msg);
+        attentionMode = (Button)findViewById(R.id.attension);
+
         pref = getSharedPreferences("t4jdata", Activity.MODE_PRIVATE);
         token=pref.getString("token", "");
         token_secret=pref.getString("token_secret", "");
@@ -124,46 +131,57 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
         }
     }
     @Override
-    public void onClick(View view) {
-        /*
-        switch(view.getId()) {
-            case R.id.tweet_button:
-            {
-                final TextView tweet = (TextView)findViewById(R.id.tweetText);
-                Intent intent = new Intent(MainActivity.this, TwitterService.class);
-                intent.putExtra(TwitterService.EXTRA_isTweet, true);
-                intent.putExtra(TwitterService.EXTRA_tweet, tweet.getText().toString());
-                startService(intent);
-                tweet.setText("");
-                break;
-            }
-        }
-        */
-    }
-    @Override
     protected void onResume() {
         //センサマネージャ等の設定
         super.onResume();
-        List<Sensor> sensors = sm.getSensorList(Sensor.TYPE_ACCELEROMETER);
+        List<Sensor> sensors = asm.getSensorList(Sensor.TYPE_ACCELEROMETER);
         if (sensors.size() > 0) {
             Sensor s = sensors.get(0);
-            sm.registerListener(this, s, SensorManager.SENSOR_DELAY_NORMAL);
+            asm.registerListener(this, s, SensorManager.SENSOR_DELAY_NORMAL);
         }
         boolean isNetworkEnabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
-        /*
         if (isNetworkEnabled) {
-            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER,location_min_time,location_min_distance,this);
+            //警告文が出るが、これは「ユーザに拒否されるかもよ？」という意味なので実行には問題ない
+            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, location_min_time, location_min_distance, this);
         }
-        */
     }
 
     @Override
     public void onLocationChanged(Location location) {
         String m = "";
         //位置情報の表示
-        m += "経度 : "+location.getLongitude()+"\n";//緯度の取得
-        m += "緯度 : "+location.getLatitude()+"\n";//経度の取得
+        m += "緯度 : "+location.getLatitude()+"\n";//緯度の取得
+        m += "経度 : "+location.getLongitude()+"\n";//経度の取得
         locate.setText(m);
+        if (!setDistance) {
+            //移動前の位置の記録
+            startLati = location.getLatitude();
+            startLong = location.getLongitude();
+            setDistance = true;
+        }
+        //現在地の記録
+        endLati = location.getLatitude();
+        endLong = location.getLongitude();
+        //√( (緯度の差 * 111)**２ + (経度の差 * 91)**２ )
+        if (setDistance) {
+            //現在地と初期値の距離を計算する
+            double latiDis = ((endLati-startLati)*111.0)*((endLati-startLati)*111.0);
+            double longDis = ((endLong-startLong)*91.0)*((endLong-startLong)*91.0);
+            if (Math.sqrt(latiDis+longDis) >= 0.01 && !isDisTweet) {
+                total += Math.sqrt(latiDis+longDis);
+                startLati = endLati;
+                startLong = endLong;
+                appMessage.setText("今だいたい" + total + "km移動したよー");
+                if (total >= distance) {
+                    //isDisTweet = true;
+                    Intent intent = new Intent(MainActivity.this, TwitterService.class);
+                    intent.putExtra(TwitterService.EXTRA_isTweet, true);
+                    intent.putExtra(TwitterService.EXTRA_tweet, distance + "km移動したー");
+                    startService(intent);
+                    distance += 1.0;
+                }
+            }
+        }
     }
 
     @Override
@@ -193,44 +211,92 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
-        String m = "";
-        float x=0, y=0, z=0;
-        switch (sensorEvent.sensor.getType()) {
-            case Sensor.TYPE_ACCELEROMETER:
-                x = sensorEvent.values[0];
-                y = sensorEvent.values[1];
-                z = sensorEvent.values[2];
-                if (Math.abs(data[0]-x)>1 || Math.abs(data[1]-y)>1 || Math.abs(data[2]-z)>1) {
-                    //加速度が一定以上の変化があった場合
-                    data[0] = x;
-                    data[1] = y;
-                    data[2] = z;
-                    start = System.currentTimeMillis();
-                    vibra = false;
+        if (isAttention) {
+            String m = "";
+            float x = 0, y = 0, z = 0;
+            switch (sensorEvent.sensor.getType()) {
+                case Sensor.TYPE_ACCELEROMETER:
+                    x = sensorEvent.values[0];
+                    y = sensorEvent.values[1];
+                    z = sensorEvent.values[2];
+                    if (Math.abs(data[0] - x) > 1 || Math.abs(data[1] - y) > 0.2 || Math.abs(data[2] - z) > 1) {
+                        //加速度が一定以上の変化があった場合
+                        data[0] = x;
+                        data[1] = y;
+                        data[2] = z;
+                        start = System.currentTimeMillis();
+                        vibra = 0;
+                        appFace.setText("(-ω-)");
+                        appMessage.setText("・・・・・・。");
+                    }
+                    end = System.currentTimeMillis();
+            }
+            //情報表示用の処理
+            m += x + "\n";
+            m += y + "\n";
+            m += z + "\n";
+            m += ((end - start) / 1000) + "秒";
+            time.setText(m);
+            if ((end - start) / 1000 >= 10 && vibra == 0) {
+                //もし一定以上加速度が変わらなかった場合、バイブレーションを起動する
+                ((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(new long[]{500, 200, 500, 200}, -1);
+                vibra = 1;
+                appFace.setText("(-Д-)");
+                appMessage.setText("？？？？？？");
+                Intent intent = new Intent(MainActivity.this, TwitterService.class);
+                intent.putExtra(TwitterService.EXTRA_isTweet, true);
+                intent.putExtra(TwitterService.EXTRA_tweet, "10秒間も音沙汰無し");
+                startService(intent);
+            }
+            if ((end - start) / 1000 >= 20 && vibra == 1) {
+                //さらに一定以上加速度が変わらなかった場合、バイブレーションを起動する
+                ((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(new long[]{500, 600, 500, 600}, -1);
+                vibra = 2;
+                appFace.setText("(-Д-#)");
+                appMessage.setText("もしもーし？");
+                Intent intent = new Intent(MainActivity.this, TwitterService.class);
+                intent.putExtra(TwitterService.EXTRA_isTweet, true);
+                intent.putExtra(TwitterService.EXTRA_tweet, "20秒も放置されてる・・・つらい・・・");
+                startService(intent);
+            }
+            if ((end - start) / 1000 >= 30) {
+                //さらにさらに一定以上加速度が変わらなかった場合、バイブレーションを永続起動する
+                if (!endless) {
+                    endlessS = System.currentTimeMillis();
+                    ((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(1000);
+                    appFace.setText("Щ(°Д°#Щ)");
+                    appMessage.setText("か゛ま゛え゛よ゛お゛お゛お゛お゛お゛お゛お゛お゛!!!!!");
+                    Intent intent = new Intent(MainActivity.this, TwitterService.class);
+                    intent.putExtra(TwitterService.EXTRA_isTweet, true);
+                    intent.putExtra(TwitterService.EXTRA_tweet, "構ってほしいなあ・・・");
+                    startService(intent);
                 }
-                end = System.currentTimeMillis();
-        }
-        //情報表示用の処理
-        m += x+"\n";
-        m += y+"\n";
-        m += z+"\n";
-        m += ((end-start)/1000)+"秒";
-        time.setText(m);
-        if ((end-start)/1000 >= 10 && !vibra) {
-            //もし一定以上加速度が変わらなかった場合、バイブレーションを起動する
-            ((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(new long[]{500,200,500,200},-1);
-            vibra = true;
-            Intent intent = new Intent(MainActivity.this, TwitterService.class);
-            intent.putExtra(TwitterService.EXTRA_isTweet, true);
-//            intent.putExtra(TwitterService.EXTRA_tweet, "10秒");
-//            intent.putExtra(TwitterService.EXTRA_tweet, "10秒も放置された");
-            intent.putExtra(TwitterService.EXTRA_tweet, "10秒間も音沙汰無し");
-            startService(intent);
+                endlessG = System.currentTimeMillis();
+                if ((endlessG - endlessS) < 700) endless = true;
+                else endless = false;
+            }
         }
     }
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
 
+    }
+    @Override
+    protected void onDestroy() {
+        //センサマネージャの解放
+        super.onDestroy();
+        asm.unregisterListener(this);
+    }
+
+    public void attentionSeeker(View view) {
+        if (isAttention) {
+            isAttention = false;
+            attentionMode.setText("OFF");
+        }
+        else {
+            isAttention = true;
+            attentionMode.setText("ON");
+        }
     }
 }

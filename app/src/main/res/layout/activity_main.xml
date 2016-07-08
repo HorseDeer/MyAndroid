@@ -12,9 +12,10 @@
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="Large Text"
         android:id="@+id/acceleText"
+        android:layout_marginTop="89dp"
         android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="45dp" />
+        android:layout_alignLeft="@+id/providerText"
+        android:layout_alignStart="@+id/providerText" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -33,5 +34,55 @@
         android:id="@+id/providerText"
         android:layout_above="@+id/locationText"
         android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="(-ω-)"
+        android:id="@+id/face"
+        android:layout_marginBottom="64dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:gravity="center_vertical" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="V"
+        android:id="@+id/v"
+        android:layout_above="@+id/face"
+        android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="はろー"
+        android:id="@+id/msg"
+        android:layout_above="@+id/v"
+        android:layout_centerHorizontal="true"
+        android:gravity="center_vertical" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="On"
+        android:id="@+id/attension"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/v"
+        android:layout_toEndOf="@+id/v"
+        android:onClick="attentionSeeker" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="かまってちゃんモード"
+        android:id="@+id/mode"
+        android:layout_alignBottom="@+id/attension"
+        android:layout_alignRight="@+id/v"
+        android:layout_alignEnd="@+id/v" />
 
 </RelativeLayout>
