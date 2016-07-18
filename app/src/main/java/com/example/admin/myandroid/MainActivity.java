@@ -168,11 +168,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             double latiDis = ((endLati-startLati)*111.0)*((endLati-startLati)*111.0);
             double longDis = ((endLong-startLong)*91.0)*((endLong-startLong)*91.0);
             if (Math.sqrt(latiDis+longDis) >= 0.01 && !isDisTweet) {
+                //初期値からの移動距離が一定以上だったら「移動した」とみなす
                 total += Math.sqrt(latiDis+longDis);
+                //初期位置のリセット
                 startLati = endLati;
                 startLong = endLong;
                 appMessage.setText("今だいたい" + total + "km移動したよー");
                 if (total >= distance) {
+                    //トータルで一定以上移動してたらツイート
                     //isDisTweet = true;
                     Intent intent = new Intent(MainActivity.this, TwitterService.class);
                     intent.putExtra(TwitterService.EXTRA_isTweet, true);
