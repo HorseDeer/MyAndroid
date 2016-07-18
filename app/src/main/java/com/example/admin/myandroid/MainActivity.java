@@ -21,6 +21,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import org.w3c.dom.Text;
@@ -62,7 +63,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     int vibra = 0, location_min_time = 0, location_min_distance = 1;
     double startLati, endLati, startLong, endLong, distance = 1.0, total = 0.0;
     long start, end, endlessS=0, endlessG=0;
-    TextView time, locate, prov, appFace, appMessage;
+    TextView time, locate, prov, appMessage;
+    static ImageView appFace;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         time = (TextView)findViewById(R.id.acceleText);
         locate = (TextView)findViewById(R.id.locationText);
         prov = (TextView)findViewById(R.id.providerText);
-        appFace = (TextView)findViewById(R.id.face);
+        appFace = (ImageView) findViewById(R.id.face);
         appMessage = (TextView)findViewById(R.id.msg);
         attentionMode = (Button)findViewById(R.id.attension);
 
@@ -235,13 +237,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     data[2] = z;
                     start = System.currentTimeMillis();
                     vibra = 0;
-                    appFace.setText("(-ω-)");
                     appMessage.setText("・・・・・・。");
                 }
                 end = System.currentTimeMillis();
                 break;
             case Sensor.TYPE_LIGHT:
-                m += sensorEvent.values[0];
                 break;
         }
         //情報表示用の処理
@@ -256,7 +256,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 //もし一定以上加速度が変わらなかった場合、バイブレーションを起動する
                 ((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(new long[]{500, 200, 500, 200}, -1);
                 vibra = 1;
-                appFace.setText("(-Д-)");
                 appMessage.setText("？？？？？？");
                 Intent intent = new Intent(MainActivity.this, TwitterService.class);
                 intent.putExtra(TwitterService.EXTRA_isTweet, true);
@@ -267,7 +266,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 //さらに一定以上加速度が変わらなかった場合、バイブレーションを起動する
                 ((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(new long[]{500, 600, 500, 600}, -1);
                 vibra = 2;
-                appFace.setText("(-Д-#)");
                 appMessage.setText("もしもーし？");
                 Intent intent = new Intent(MainActivity.this, TwitterService.class);
                 intent.putExtra(TwitterService.EXTRA_isTweet, true);
@@ -279,7 +277,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 if (!endless) {
                     endlessS = System.currentTimeMillis();
                     ((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(1000);
-                    appFace.setText("Щ(°Д°#Щ)");
                     appMessage.setText("か゛ま゛え゛よ゛お゛お゛お゛お゛お゛お゛お゛お゛!!!!!");
                     Intent intent = new Intent(MainActivity.this, TwitterService.class);
                     intent.putExtra(TwitterService.EXTRA_isTweet, true);
@@ -307,11 +304,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public void attentionSeeker(View view) {
         if (isAttention) {
             isAttention = false;
-            attentionMode.setText("OFF");
+            attentionMode.setText("ON");
         }
         else {
             isAttention = true;
-            attentionMode.setText("ON");
+            start = System.currentTimeMillis();
+            attentionMode.setText("OFF");
         }
     }
 }

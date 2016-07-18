@@ -6,6 +6,8 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -14,6 +16,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Vibrator;
@@ -23,6 +26,9 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -102,13 +108,21 @@ public class TwitterService extends IntentService {
             } catch (TwitterException e) {
                 e.printStackTrace();
             }
-
             pref = getSharedPreferences("t4jdata", Activity.MODE_PRIVATE);
             ownerId = pref.getLong("owner", -1);
             for(int i=0; i<friendId.size(); i++) {
                 friendId.add(pref.getLong("friends"+i, 0));
             }
             Log.i("message", "logined");
+
+            try {
+                Uri uri = Uri.parse(twitterService.verifyCredentials().getProfileImageURL());
+                Uri.Builder builder = uri.buildUpon();
+                AsyncTaskHttpRequest task = new AsyncTaskHttpRequest(MainActivity.appFace);
+                task.execute(builder);
+            } catch (Exception e) {
+                Log.e("error", e.toString());
+            }
         }
         boolean isTweet = intent.getBooleanExtra(EXTRA_isTweet, false);
         String tweet = intent.getStringExtra(EXTRA_tweet);
