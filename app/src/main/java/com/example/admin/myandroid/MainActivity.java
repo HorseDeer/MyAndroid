@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     //各種グローバル変数の定義
     AsyncTwitterFactory factory = new AsyncTwitterFactory();
     AsyncTwitter twitter = factory.getInstance();
-    Twitter myTwitter;
+    static Twitter myTwitter;
     AccessToken accessToken;
     final int REQUEST_ACCESS_TOKEN = 0;
     final String consumer_key = "mN3nLNC0DKY1hvrut1rJZVdqG";
