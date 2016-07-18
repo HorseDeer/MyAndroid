@@ -53,11 +53,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     SharedPreferences.Editor editor;
 
     //主にセンサー関係のグローバル変数
-    private SensorManager asm;
+    private SensorManager asm,lsm;
     private LocationManager lm;
     private Button attentionMode;
     boolean endless = false, setDistance = false, isDisTweet = false, isAttention = false;
     float[] data = new float[3];
+    float lightS, lightE;
     int vibra = 0, location_min_time = 0, location_min_distance = 1;
     double startLati, endLati, startLong, endLong, distance = 1.0, total = 0.0;
     long start, end, endlessS=0, endlessG=0;
@@ -69,8 +70,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //加速度センサマネージャとロケーションマネージャの設定
+        //各種センサマネージャとロケーションマネージャの設定
         asm = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
+        lsm = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
         lm = (LocationManager)getSystemService(Service.LOCATION_SERVICE);
         //時間計測の開始
         start = System.currentTimeMillis();
@@ -138,6 +140,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (sensors.size() > 0) {
             Sensor s = sensors.get(0);
             asm.registerListener(this, s, SensorManager.SENSOR_DELAY_NORMAL);
+        }
+        List<Sensor> sensors2 = lsm.getSensorList(Sensor.TYPE_LIGHT);
+        if (sensors2.size() > 0) {
+            Sensor s2 = sensors2.get(0);
+            lsm.registerListener(this, s2, SensorManager.SENSOR_DELAY_NORMAL);
         }
         boolean isNetworkEnabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
         if (isNetworkEnabled) {
@@ -214,30 +221,35 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
+        String m = "";
+        float x = 0, y = 0, z = 0;
+        switch (sensorEvent.sensor.getType()) {
+            case Sensor.TYPE_ACCELEROMETER :
+                x = sensorEvent.values[0];
+                y = sensorEvent.values[1];
+                z = sensorEvent.values[2];
+                if (Math.abs(data[0] - x) > 0.2 || Math.abs(data[1] - y) > 0.2 || Math.abs(data[2] - z) > 0.2) {
+                    //加速度が一定以上の変化があった場合
+                    data[0] = x;
+                    data[1] = y;
+                    data[2] = z;
+                    start = System.currentTimeMillis();
+                    vibra = 0;
+                    appFace.setText("(-ω-)");
+                    appMessage.setText("・・・・・・。");
+                }
+                end = System.currentTimeMillis();
+                break;
+            case Sensor.TYPE_LIGHT:
+                m += sensorEvent.values[0];
+                break;
+        }
+        //情報表示用の処理
+        m += x + "\n";
+        m += y + "\n";
+        m += z + "\n";
+        time.setText(m);
         if (isAttention) {
-            String m = "";
-            float x = 0, y = 0, z = 0;
-            switch (sensorEvent.sensor.getType()) {
-                case Sensor.TYPE_ACCELEROMETER:
-                    x = sensorEvent.values[0];
-                    y = sensorEvent.values[1];
-                    z = sensorEvent.values[2];
-                    if (Math.abs(data[0] - x) > 1 || Math.abs(data[1] - y) > 0.2 || Math.abs(data[2] - z) > 1) {
-                        //加速度が一定以上の変化があった場合
-                        data[0] = x;
-                        data[1] = y;
-                        data[2] = z;
-                        start = System.currentTimeMillis();
-                        vibra = 0;
-                        appFace.setText("(-ω-)");
-                        appMessage.setText("・・・・・・。");
-                    }
-                    end = System.currentTimeMillis();
-            }
-            //情報表示用の処理
-            m += x + "\n";
-            m += y + "\n";
-            m += z + "\n";
             m += ((end - start) / 1000) + "秒";
             time.setText(m);
             if ((end - start) / 1000 >= 10 && vibra == 0) {
