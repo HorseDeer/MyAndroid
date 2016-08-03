@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         appMessage = (TextView)findViewById(R.id.msg);
         appMessage.setTextColor(Color.BLUE);
         PastTL = (TextView)findViewById(R.id.pastTL);
-        attentionMode = (Button)findViewById(R.id.text);
+        attentionMode = (Button)findViewById(R.id.attension);
 
         pref = getSharedPreferences("t4jdata", Activity.MODE_PRIVATE);
         token=pref.getString("token", "");
