@@ -57,14 +57,14 @@ public class TwitterService extends IntentService {
     final static String EXTRA_isTweet = "extra_isTweet";
     final static String EXTRA_tweet = "extra_tweet";
 
-    private ResponseList<Status> myTweets;
+    static ResponseList<Status> myTweets;
 
-    private Twitter twitterService = null;
-    private User myUser;
-    private SharedPreferences pref;
-    private SharedPreferences.Editor editor;
-    private long ownerId;
-    private ArrayList<Long> friendId = new ArrayList<Long>();
+    static Twitter twitterService = null;
+    static User myUser;
+    static SharedPreferences pref;
+    static SharedPreferences.Editor editor;
+    static long ownerId;
+    static ArrayList<Long> friendId = new ArrayList<Long>();
     Calendar now;
 
     public TwitterService(String name) {
