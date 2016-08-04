@@ -1,38 +1,16 @@
 package com.example.admin.myandroid;
-
 import android.app.Activity;
 import android.app.IntentService;
-import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
-import android.location.LocationProvider;
 import android.net.Uri;
-import android.os.Bundle;
 import android.os.IBinder;
-import android.os.Vibrator;
 import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.View;
-import android.widget.TextView;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 import twitter4j.ResponseList;
 import twitter4j.StatusUpdate;
 import twitter4j.Twitter;
@@ -45,7 +23,6 @@ import twitter4j.User;
 import twitter4j.UserStreamAdapter;
 import twitter4j.auth.AccessToken;
 import twitter4j.conf.ConfigurationBuilder;
-
 public class TwitterService extends IntentService {
     final static String EXTRA_CONSUMER_KEY = "consumer_key";
     final static String EXTRA_CONSUMER_SECRET = "consumer_secret";
@@ -54,13 +31,14 @@ public class TwitterService extends IntentService {
     final static String EXTRA_isTweet = "extra_isTweet";
     final static String EXTRA_tweet = "extra_tweet";
     static ResponseList<Status> myTweets = null;
+    static ArrayList<String> myTweetTexts = new ArrayList<String>();
     static Twitter twitterService;
     static User myUser;
     static SharedPreferences pref;
     static SharedPreferences.Editor editor;
     static long ownerId;
     static ArrayList<Long> friendId = new ArrayList<Long>();
-    Calendar now;
+    static boolean isLogin = false;
     public TwitterService(String name) {
         super(name);
     }
@@ -108,6 +86,7 @@ public class TwitterService extends IntentService {
                 friendId.add(pref.getLong("friends"+i, 0));
             }
             Log.i("message", "logined");
+            isLogin = true;
             //  アイコンの取得
             try {
                 Uri uri = Uri.parse(twitterService.verifyCredentials().getOriginalProfileImageURL());
@@ -172,17 +151,19 @@ public class TwitterService extends IntentService {
         tweet += " #Cait_B";
         try {
             boolean tweeted = false;
-            for(Status t : myTweets) {
-                if(t.getText().equals(tweet)) {
+            for(String t : myTweetTexts) {
+                if(t.equals(tweet)) {
                     tweeted = true;
                 }
             }
             if(!tweeted) {
                 myTweets.add(twitterService.updateStatus(tweet));
+                myTweetTexts.add(tweet);
             } else {
                 Log.i("message", tweet+" is already tweeted");
             }
         } catch(Exception e) {
+            myTweetTexts.add(tweet);
             Log.i("error", e.getMessage());
         }
     }
@@ -191,17 +172,19 @@ public class TwitterService extends IntentService {
         tweet += " #Cait_B";
         try {
             boolean tweeted = false;
-            for(Status t : myTweets) {
-                if(t.getText().equals(tweet)) {
+            for(String t : myTweetTexts) {
+                if(t.equals(tweet)) {
                     tweeted = true;
                 }
             }
             if(!tweeted) {
                 myTweets.add(twitterService.updateStatus(new StatusUpdate("@"+status.getUser().getScreenName()+" "+tweet).inReplyToStatusId(status.getId())));
+                myTweetTexts.add(tweet);
             } else {
                 Log.i("message", tweet+" is already tweeted");
             }
         } catch(Exception e) {
+            myTweetTexts.add(tweet);
             Log.i("error", e.getMessage());
         }
     }

@@ -80,4 +80,14 @@
         android:layout_alignRight="@+id/face"
         android:layout_alignEnd="@+id/face" />
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:id="@+id/index"
+        android:layout_above="@+id/attension"
+        android:layout_alignRight="@+id/attension"
+        android:layout_alignEnd="@+id/attension"
+        android:gravity="center" />
+
 </RelativeLayout>
